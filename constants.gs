@@ -1,13 +1,13 @@
-const SheetName = {
+var SheetName = {
     HISTORY: 'History',
     LEDGER: 'Ledger',
 };
 
-const Row = {
+var Row = {
     FIRST_DATA_ROW: 2
 };
 
-const Column = {
+var Column = {
     DATE: 1,
     TYPE: 2,
     AMOUNT: 3,
@@ -15,10 +15,10 @@ const Column = {
     MEMO: 5,
 };
 
-const NUM_DATA_COLUMNS = 5;
-const NUM_REQ_DATA_COLUMNS = 4;
+var NUM_DATA_COLUMNS = 5;
+var NUM_REQ_DATA_COLUMNS = 4;
 
-const InterestRate = {
+var InterestRateLocation = {
     column: 8,
     row: 1,
 };

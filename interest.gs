@@ -2,7 +2,7 @@
  * Get the current interest APR
  */
 function getCurrentInterestRate() {
-    return getLedger().getRange(InterestRate.row, InterestRate.column).getValue();
+    return getLedger().getRange(InterestRateLocation.row, InterestRateLocation.column).getValue();
 }
 
 /**
