@@ -15,10 +15,11 @@ var Column = {
     MEMO: 5,
 };
 
-var NUM_DATA_COLUMNS = 5;
-var NUM_REQ_DATA_COLUMNS = 4;
-
 var InterestRateLocation = {
     column: 8,
     row: 1,
 };
+
+var NUM_DATA_COLUMNS = 5;
+var NUM_REQ_DATA_COLUMNS = 4;
+
