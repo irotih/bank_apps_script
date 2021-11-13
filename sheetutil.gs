@@ -1,100 +1,148 @@
+/**
+ * @returns The Ledger sheet
+ */
 function getLedger() {
-  return SpreadsheetApp.getActive().getSheetByName('Ledger');
+    return SpreadsheetApp.getActive().getSheetByName(SheetName.LEDGER);
 }
 
+/**
+ * @returns The History sheet 
+ */
 function getHistory() {
-  return SpreadsheetApp.getActive().getSheetByName('History');
+    return SpreadsheetApp.getActive().getSheetByName(SheetName.HISTORY);
 }
 
-function isEmpty() {
-  return getLedger().getLastRow() === 1 || getLedger().getRange(2,1).isBlank();
+/**
+ * Checks if the specified row is completely filled (required fields)
+ * @param sheet 
+ * @param row 
+ * @returns 
+ */
+function isRowComplete(sheet, row) {
+    const rowValues = sheet.getRange(row, 1, 1, NUM_REQ_DATA_COLUMNS).getValues();
+    for (let value of rowValues) {
+        if (value === '') {
+            return false;
+        }
+    }
+    return true;
 }
 
+/**
+ * Checks if the specified row is completely empty
+ * @param sheet 
+ * @param row 
+ * @returns 
+ */
+function isRowEmpty(sheet, row) {
+    const rowValues = sheet.getRange(row, 1, 1, NUM_DATA_COLUMNS).getValues();
+    for (let value of rowValues) {
+        if (value !== '') {
+            return false;
+        }
+    }
+    return true;
+}
+
+/**
+ * Checks if the sheet is empty (no data rows)
+ * @param sheet 
+ * @returns 
+ */
+function isEmpty(sheet) {
+    return sheet.getLastRow() === 1 || isRowEmpty(sheet, Row.FIRST_DATA_ROW);
+}
+
+/**
+ * Get the last row id containing data
+ * @param sheet 
+ * @throws If the last data row is not complete or if the sheet has no data rows
+ */
+function getLastDataRow(sheet) {
+    const lastSheetRow = sheet.getLastDataRow();
+    if (lastSheetRow === 1) {
+        throw new Error('Sheet is empty');
+    }
+    for (let row = lastSheetRow; row >= Row.FIRST_DATA_ROW; row--) {
+        if (isRowComplete(sheet, row)) {
+            return row;
+        } else if (!isEmpty(sheet, row)) {
+            throw new Error('Last row is not complete');
+        }
+    }
+    throw new Error('Sheet is empty');
+}
+
+/**
+ * Get the final balance for the provided sheet
+ * @param sheet 
+ * @returns 
+ */
+function getSheetBalance(sheet) {
+    if (isEmpty(sheet)) {
+        return 0;
+    }
+    const lastRow = getLastDataRow(sheet);
+    return sheet.getRange(lastRow, Column.BALANCE).getValue();
+}
+
+/**
+ * Get the final current balance.
+ * @returns 
+ */
 function getCurrentBalance() {
-  return getLedger().getRange(2,8).getValue();
+    return getSheetBalance(getLedger());
 }
 
+/**
+ * Get the last balance in History tab
+ * @returns 
+ */
 function getHistoricBalance() {
-  return getHistory().getRange(1,8).getValue();
+    return getSheetBalance(getHistory());
 }
 
-function getStartingDate() {
-  if(isEmpty()) {
-    return null;
-  }
-  return convertToMoment(getLedger().getRange(2,1).getValue());
-}
-
-function getEndingDate() {
-  if(isEmpty()) {
-    return null;
-  }
-  const ledger = getLedger();
-  return convertToMoment(ledger.getRange(ledger.getLastRow(), 1).getValue());
-}
-
-function getStartingBalance() {
-  if(isEmpty()) {
-    return null;
-  }
-  return getLedger().getRange(2,4).getValue();
-}
-
-function getInsertionRow(date) {
-  const ledger = getLedger();
-  const range = ledger.getDataRange().getValues();
-  for(var row = range.length - 1; row >= 1; row--) {
-    if(convertToMoment(range[row][0]).isBefore(date)) {
-      return row+2;
+/**
+ * Get the starting date on the provided sheet
+ * @returns 
+ */
+function getStartingDate(sheet) {
+    if (isEmpty(sheet)) {
+        return null;
     }
-  }
-  return ledger.getLastRow();
+    return convertToMoment(sheet.getRange(Row.FIRST_DATA_ROW, Column.DATE).getValue());
 }
 
-function getLastBalanceOfMonth(date) {
-  if(isEmpty()) {
-    return 0;
-  }
-  const lastDateOfMonth = getEndOfMonth(date);
-  const range = getLedger().getDataRange().getValues();
-  var lastSeenBalance = range[range.length-1][3];
-  for(var i = range.length; i < range.length; i++) {
-    if(convertToMoment(range[i][0]).isAfter(date)) {
-       return lastSeenBalance;
+/**
+ * Get the ending date on the provided sheet
+ * @returns 
+ */
+function getEndingDate(sheet) {
+    if (isEmpty(sheet)) {
+        return null;
     }
-    lastSeenBalance = range[i][3];
-  }
-  return lastSeenBalance;
+    return convertToMoment(sheet.getRange(getLastDataRow(sheet), Column.DATE).getValue());
 }
 
-function getLinesForMonth(year, month) {
-  const dateRange = getMonthRange(year, month);
-  const lines = [];
-  const range = getLedger().getDataRange().getValues();
-  var date = null;
-  for(var i = 1; i<range.length; i++) {
-    date = convertToMoment(range[i][0]);
-    if(!(date.isBefore(dateRange.start) || date.isAfter(dateRange.end))) {
-      lines.push({
-        date: date,
-        row: i+1,
-        type: range[i][1],
-        delta: range[i][2],
-        balance: range[i][3]
-      });
+/**
+ * Get the starting balance on the provided sheet
+ * @returns 
+ */
+function getStartingBalance(sheet) {
+    if (isEmpty(sheet)) {
+        return null;
     }
-    if(date.isAfter(dateRange.end)) {
-      break;
-    }
-  }
-  return lines;
+    return sheet.getRange(Row.FIRST_DATA_ROW, Column.BALANCE).getValue();
 }
 
-function shiftLinesDown(firstRow) {
-  const ledger = getLedger();
-  const numRows = ledger.getLastRow() - firstRow + 1;
-  const srcRange = ledger.getRange(firstRow, 1, numRows, 5);
-  const destRange = ledger.getRange(firstRow+1, 1, numRows, 5);
-  srcRange.copyTo(destRange);
-  ledger.getRange(firstRow, 1, 1, 5).clearContent();
+/**
+ * Get the ending balance on the provided sheet
+ * @param sheet 
+ * @returns 
+ */
+function getEndingBalance(sheet) {
+    if (isEmpty(sheet)) {
+        return null;
+    }
+    return sheet.getRange(getLastDataRow(sheet), Column.BALANCE).getValue();
 }
