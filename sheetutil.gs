@@ -20,8 +20,8 @@ function getHistory() {
  */
 function isRowComplete(sheet, row) {
     const rowValues = sheet.getRange(row, 1, 1, NUM_REQ_DATA_COLUMNS).getValues();
-    for (let value of rowValues) {
-        if (value === '') {
+    for (var i = 0; i < NUM_REQ_DATA_COLUMNS; i++) {
+        if (rowValues[0][i] === '') {
             return false;
         }
     }
@@ -36,8 +36,8 @@ function isRowComplete(sheet, row) {
  */
 function isRowEmpty(sheet, row) {
     const rowValues = sheet.getRange(row, 1, 1, NUM_DATA_COLUMNS).getValues();
-    for (let value of rowValues) {
-        if (value !== '') {
+    for (var i = 0; i < NUM_DATA_COLUMNS; i++) {
+        if (rowValues[0][i] !== '') {
             return false;
         }
     }
@@ -63,7 +63,7 @@ function getLastDataRow(sheet) {
     if (lastSheetRow === 1) {
         throw new Error('Sheet is empty');
     }
-    for (let row = lastSheetRow; row >= Row.FIRST_DATA_ROW; row--) {
+    for (var row = lastSheetRow; row >= Row.FIRST_DATA_ROW; row--) {
         if (isRowComplete(sheet, row)) {
             return row;
         } else if (!isEmpty(sheet, row)) {
