@@ -22,4 +22,4 @@ var InterestRateLocation = {
 
 var NUM_DATA_COLUMNS = 5;
 var NUM_REQ_DATA_COLUMNS = 4;
-//test
+
