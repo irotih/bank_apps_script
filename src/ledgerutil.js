@@ -55,7 +55,7 @@ function getLinesForMonth(year, month) {
     const lines = [];
     const range = getLedger().getDataRange().getValues();
     var date = null;
-    for(var i = 1; i<range.length; i++) {
+    for(var i = Constants.LedgerRow.FIRST_DATA_ROW - 1; i<range.length; i++) {
       date = convertDateToMidnight(range[i][0]);
       if(!(isBefore(date, dateRange.start) || isAfter(date, dateRange.end))) {
         lines.push({
@@ -80,8 +80,8 @@ function getLinesForMonth(year, month) {
 function shiftLinesDown(firstRow) {
     const ledger = getLedger();
     const numRows = getLastDataRow(ledger) - firstRow + 1;
-    const srcRange = ledger.getRange(firstRow, 1, numRows, NUM_DATA_COLUMNS);
-    const destRange = ledger.getRange(firstRow + 1, 1, numRows, NUM_DATA_COLUMNS);
+    const srcRange = ledger.getRange(firstRow, 1, numRows, Constants.NUM_DATA_COLUMNS);
+    const destRange = ledger.getRange(firstRow + 1, 1, numRows, Constants.NUM_DATA_COLUMNS);
     srcRange.copyTo(destRange);
-    ledger.getRange(firstRow, 1, 1, NUM_DATA_COLUMNS).clearContent();
+    ledger.getRange(firstRow, 1, 1, Constants.NUM_DATA_COLUMNS).clearContent();
 }

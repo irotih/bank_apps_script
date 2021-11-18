@@ -2,7 +2,7 @@
  * Get the current interest APR
  */
 function getCurrentInterestRate() {
-    return getLedger().getRange(InterestRateLocation.row, InterestRateLocation.column).getValue();
+    return getLedger().getRange(Constants.InterestRateLocation.row, Constants.InterestRateLocation.column).getValue();
 }
 
 /**
@@ -27,7 +27,6 @@ function calculateInterest(endOfLastMonth, endingBalance, endOfThisMonth, lineIt
     var dailyRate = getCurrentInterestRate() / 365;
     sortBalancesByDate(lineItems);
     var lastDate = endOfLastMonth;
-    var nextDate = null;
     var startingBalance = endingBalance;
     for(var i = 0; i<lineItems.length; i++) {
         if(i < lineItems.length - 1 && lineItems[i].date.isSame(lineItems[i+1].date)) {
@@ -95,11 +94,9 @@ function generateInterestPayments() {
     if(lastInterest) {
         lastDate = lastInterest.date;
         lastBalance = getLastBalanceOfMonth(lastDate);
-        recalculateBalances(lastInterest.row);
     } else {
         lastDate = getStartingDate();
         lastBalance = getStartingBalance();
-        recalculateBalances();
     }
     const missingMonths = getMissingInterestMonths(lastDate);
     var lineItems = [];

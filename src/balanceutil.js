@@ -12,7 +12,10 @@ function recalculateBalances(startingRow) {
     }
     const range = getLedger().getDataRange();
     const lastRow = range.getLastRow();
-    var i = startingRow && startingRow > 1 ? startingRow : 2;
+    var i = startingRow &&
+        startingRow >= Constants.LedgerRow.FIRST_DATA_ROW
+            ? startingRow 
+            : Constants.LedgerRow.FIRST_DATA_ROW;
     Logger.log('Recalculating balances starting at row '+i);
     var currentBalance = 0;
     var balanceCell = null;

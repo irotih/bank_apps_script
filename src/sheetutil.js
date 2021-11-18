@@ -2,14 +2,14 @@
  * @returns The Ledger sheet
  */
 function getLedger() {
-    return SpreadsheetApp.getActive().getSheetByName(SheetName.LEDGER);
+    return SpreadsheetApp.getActive().getSheetByName(Constants.SheetName.LEDGER);
 }
 
 /**
  * @returns The History sheet 
  */
 function getHistory() {
-    return SpreadsheetApp.getActive().getSheetByName(SheetName.HISTORY);
+    return SpreadsheetApp.getActive().getSheetByName(Constants.SheetName.HISTORY);
 }
 
 /**
@@ -19,8 +19,8 @@ function getHistory() {
  * @returns 
  */
 function isRowComplete(sheet, row) {
-    const rowValues = sheet.getRange(row, 1, 1, NUM_REQ_DATA_COLUMNS).getValues();
-    for (var i = 0; i < NUM_REQ_DATA_COLUMNS; i++) {
+    const rowValues = sheet.getRange(row, 1, 1, Constants.NUM_REQ_DATA_COLUMNS).getValues();
+    for (var i = 0; i < Constants.NUM_REQ_DATA_COLUMNS; i++) {
         if (rowValues[0][i] === '') {
             return false;
         }
@@ -35,13 +35,24 @@ function isRowComplete(sheet, row) {
  * @returns 
  */
 function isRowEmpty(sheet, row) {
-    const rowValues = sheet.getRange(row, 1, 1, NUM_DATA_COLUMNS).getValues();
-    for (var i = 0; i < NUM_DATA_COLUMNS; i++) {
+    const rowValues = sheet.getRange(row, 1, 1, Constants.NUM_DATA_COLUMNS).getValues();
+    for (var i = 0; i < Constants.NUM_DATA_COLUMNS; i++) {
         if (rowValues[0][i] !== '') {
             return false;
         }
     }
     return true;
+}
+
+function getFirstDataRow(sheet) {
+    switch(sheet.getName()) {
+        case 'History':
+            return Constants.HistoryRow.FIRST_DATA_ROW;
+        case 'Ledger':
+            return Constants.LedgerRow.FIRST_DATA_ROW;
+        default:
+            throw new Error('Unknown sheet named '+sheet.getName());
+    }
 }
 
 /**
@@ -50,7 +61,7 @@ function isRowEmpty(sheet, row) {
  * @returns 
  */
 function isEmpty(sheet) {
-    return sheet.getLastRow() === 1 || isRowEmpty(sheet, Row.FIRST_DATA_ROW);
+    return sheet.getLastRow() === 1 || isRowEmpty(sheet, getFirstDataRow(sheet));
 }
 
 /**
@@ -63,7 +74,7 @@ function getLastDataRow(sheet) {
     if (lastSheetRow === 1) {
         throw new Error('Sheet is empty');
     }
-    for (var row = lastSheetRow; row >= Row.FIRST_DATA_ROW; row--) {
+    for (var row = lastSheetRow; row >= getFirstDataRow(sheet); row--) {
         if (isRowComplete(sheet, row)) {
             return row;
         } else if (!isEmpty(sheet, row)) {
@@ -83,7 +94,7 @@ function getSheetBalance(sheet) {
         return 0;
     }
     const lastRow = getLastDataRow(sheet);
-    return sheet.getRange(lastRow, Column.BALANCE).getValue();
+    return sheet.getRange(lastRow, Constants.Column.BALANCE).getValue();
 }
 
 /**
@@ -110,7 +121,7 @@ function getStartingDate(sheet) {
     if (isEmpty(sheet)) {
         return null;
     }
-    return convertDateToMidnight(sheet.getRange(Row.FIRST_DATA_ROW, Column.DATE).getValue());
+    return convertDateToMidnight(sheet.getRange(getFirstDataRow(sheet), Constants.Column.DATE).getValue());
 }
 
 /**
@@ -121,7 +132,7 @@ function getEndingDate(sheet) {
     if (isEmpty(sheet)) {
         return null;
     }
-    return convertDateToMidnight(sheet.getRange(getLastDataRow(sheet), Column.DATE).getValue());
+    return convertDateToMidnight(sheet.getRange(getLastDataRow(sheet), Constants.Column.DATE).getValue());
 }
 
 /**
@@ -132,7 +143,7 @@ function getStartingBalance(sheet) {
     if (isEmpty(sheet)) {
         return null;
     }
-    return sheet.getRange(Row.FIRST_DATA_ROW, Column.BALANCE).getValue();
+    return sheet.getRange(getFirstDataRow(sheet), Constants.Column.BALANCE).getValue();
 }
 
 /**
@@ -144,5 +155,5 @@ function getEndingBalance(sheet) {
     if (isEmpty(sheet)) {
         return null;
     }
-    return sheet.getRange(getLastDataRow(sheet), Column.BALANCE).getValue();
+    return sheet.getRange(getLastDataRow(sheet), Constants.Column.BALANCE).getValue();
 }
