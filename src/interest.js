@@ -9,11 +9,11 @@ function getCurrentInterestRate() {
  * Calculate the daily accruals between 2 arbitrary dates assuming no balance change between the dates
  */
 function calculateDailyAccrual(balance, startDate, endDate, dailyRate) {
-    const numDays = endDate.diff(startDate, 'days');
+    const numDays = getDaysDiff(endDate, startDate);
     const accrual = numDays * balance * dailyRate;
     Logger.log('Calculating Daily Accrual. Start date: ' +
-              startDate.format('YYYYMMDD') + ', End date: ' +
-              endDate.format('YYYYMMDD') + ', No. Days: ' +
+              startDate.toString() + ', End date: ' +
+              endDate.toString() + ', No. Days: ' +
               numDays + ', Balance: ' + balance + ', Rate: ' +
               dailyRate + ', Accrual: ' + accrual);
     return accrual;
@@ -39,7 +39,7 @@ function calculateInterest(endOfLastMonth, endingBalance, endOfThisMonth, lineIt
         startingBalance = lineItems[i].balance;
     }
     //Calculate interest for the remainer of the month
-    if (lastDate.isBefore(endOfThisMonth)) {
+    if (isBefore(lastDate, endOfThisMonth)) {
         interest += calculateDailyAccrual(startingBalance, lastDate, endOfThisMonth, dailyRate);
     } 
     return Math.round(interest * 100) / 100;
@@ -57,7 +57,7 @@ function getLastInterest() {
     for(var row = range.length - 1; row >= 0; row--) {
         if(range[row][1] === 'Interest') {
             return {
-                date: convertToMoment(range[row][0]),
+                date: convertDateToMidnight(range[row][0]),
                 row: row+1
             };
         }
@@ -70,11 +70,11 @@ function getLastInterest() {
  */
 function getMissingInterestMonths(lastInterestDate) {
     var missingMonths = [];
-    var lastMonthend = moment().startOf('month').subtract(1, 'days');
-    var lastDate = moment(lastInterestDate);
-    while(lastDate.isBefore(lastMonthend)) {
-        lastDate.add(1, 'days').endOf('month').startOf('day');
-        missingMonths.push(moment(lastDate));
+    var lastMonthend = getEndOfPriorMonth(new Date());
+    var lastDate = lastInterestDate;
+    while(isBefore(lastDate, lastMonthend)) {
+        lastDate = getEndOfNextMonth(lastDate);
+        missingMonths.push(lastDate);
     }
     return missingMonths;
 }
@@ -106,13 +106,13 @@ function generateInterestPayments() {
     var interest = 0;
     var insertionRow = 0;
     for(var i=0; i<missingMonths.length; i++) {
-        lineItems = getLinesForMonth(missingMonths[i].year(), missingMonths[i].month()+1);
+        lineItems = getLinesForMonth(missingMonths[i].getFullYear(), missingMonths[i].getMonth()+1);
         interest = calculateInterest(lastDate, lastBalance, missingMonths[i], lineItems);
         insertionRow = getInsertionRow(missingMonths[i]);
         if(insertionRow <= getLedger().getLastRow()) {
             shiftLinesDown(insertionRow);
         }
-        getLedger().getRange(insertionRow, 1, 1, 3).setValues([[missingMonths[i].toDate(), 'Interest', interest]]);
+        getLedger().getRange(insertionRow, 1, 1, 3).setValues([[missingMonths[i], 'Interest', interest]]);
         recalculateBalances(insertionRow - 1);
         lastDate = missingMonths[i];
         lastBalance = getLedger().getRange(insertionRow, 4).getValue();

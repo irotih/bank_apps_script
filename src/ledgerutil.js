@@ -7,7 +7,7 @@ function getInsertionRow(date) {
     const ledger = getLedger();
     const range = ledger.getDataRange().getValues();
     for(var row = range.length - 1; row >= 1; row--) {
-      if(convertToMoment(range[row][0]).isBefore(date)) {
+      if(isBefore(convertDateToMidnight(range[row][0]), date)) {
         return row+2;
       }
     }
@@ -27,7 +27,7 @@ function getLastBalanceOfMonth(date) {
     const range = getLedger().getDataRange().getValues();
     var lastSeenBalance = range[range.length-1][3];
     for(var i = range.length; i < range.length; i++) {
-      if(convertToMoment(range[i][0]).isAfter(date)) {
+      if(isAfter(convertDateToMidnight(range[i][0]), date)) {
          return lastSeenBalance;
       }
       lastSeenBalance = range[i][3];
@@ -56,8 +56,8 @@ function getLinesForMonth(year, month) {
     const range = getLedger().getDataRange().getValues();
     var date = null;
     for(var i = 1; i<range.length; i++) {
-      date = convertToMoment(range[i][0]);
-      if(!(date.isBefore(dateRange.start) || date.isAfter(dateRange.end))) {
+      date = convertDateToMidnight(range[i][0]);
+      if(!(isBefore(date, dateRange.start) || isAfter(date, dateRange.end))) {
         lines.push({
           date: date,
           row: i+1,
@@ -66,7 +66,7 @@ function getLinesForMonth(year, month) {
           balance: range[i][3]
         });
       }
-      if(date.isAfter(dateRange.end)) {
+      if(isAfter(date, dateRange.end)) {
         break;
       }
     }

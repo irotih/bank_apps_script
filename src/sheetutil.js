@@ -59,7 +59,7 @@ function isEmpty(sheet) {
  * @throws If the last data row is not complete or if the sheet has no data rows
  */
 function getLastDataRow(sheet) {
-    const lastSheetRow = sheet.getLastDataRow();
+    const lastSheetRow = sheet.getLastRow();
     if (lastSheetRow === 1) {
         throw new Error('Sheet is empty');
     }
@@ -110,7 +110,7 @@ function getStartingDate(sheet) {
     if (isEmpty(sheet)) {
         return null;
     }
-    return convertToMoment(sheet.getRange(Row.FIRST_DATA_ROW, Column.DATE).getValue());
+    return convertDateToMidnight(sheet.getRange(Row.FIRST_DATA_ROW, Column.DATE).getValue());
 }
 
 /**
@@ -121,7 +121,7 @@ function getEndingDate(sheet) {
     if (isEmpty(sheet)) {
         return null;
     }
-    return convertToMoment(sheet.getRange(getLastDataRow(sheet), Column.DATE).getValue());
+    return convertDateToMidnight(sheet.getRange(getLastDataRow(sheet), Column.DATE).getValue());
 }
 
 /**
