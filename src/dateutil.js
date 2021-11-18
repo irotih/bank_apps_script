@@ -36,6 +36,10 @@ function convertDateToMidnight(date) {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate());
 }
 
+function isSame(date1, date2) {
+  return convertDateToMidnight(date1).getTime() === convertDateToMidnight(date2).getTime();
+}
+
 /**
  * @param {Date} date 
  * @returns the last date in the month of the provided date

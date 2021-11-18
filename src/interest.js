@@ -29,7 +29,7 @@ function calculateInterest(endOfLastMonth, endingBalance, endOfThisMonth, lineIt
     var lastDate = endOfLastMonth;
     var startingBalance = endingBalance;
     for(var i = 0; i<lineItems.length; i++) {
-        if(i < lineItems.length - 1 && lineItems[i].date.isSame(lineItems[i+1].date)) {
+        if(i < lineItems.length - 1 && isSame(lineItems[i].date, lineItems[i+1].date)) {
             //Skip the row if next row has the same date. This guarantees we get the latest ending balance
             continue;
         }
