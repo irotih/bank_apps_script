@@ -89,6 +89,9 @@ function generateInterestPayments() {
     if(isEmpty(ledger)) {
         return;
     }
+    if (getCurrentInterestRate() == 0) {
+        return;
+    }
     const lastInterest = getLastInterest();
     var firstDateOfAccrual;
     var lastBalance;
