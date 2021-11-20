@@ -157,3 +157,13 @@ function getEndingBalance(sheet) {
     }
     return sheet.getRange(getLastDataRow(sheet), Constants.Column.BALANCE).getValue();
 }
+
+function shiftRowsUp(sheet, firstRowToShift, lastRowToShift, destinationRow) {
+    const numRowsToShift = lastRowToShift - firstRowToShift + 1;
+    const rangeToShift = sheet.getRange(firstRowToShift, 1, numRowsToShift, Constants.NUM_DATA_COLUMNS);
+    rangeToShift.copyTo(sheet.getRange(destinationRow, 1, numRowsToShift, Constants.NUM_DATA_COLUMNS));
+
+    const firstLeftover = destinationRow + numRowsToShift;
+    const leftoverRows = lastRowToShift - firstLeftover + 1;
+    sheet.getRange(firstLeftover, 1, leftoverRows, Constants.NUM_DATA_COLUMNS).clearContent();
+}

@@ -67,13 +67,13 @@ function getLastInterest() {
 /**
  * Get the last date in each month that has no interest payments
  */
-function getMissingInterestMonths(lastInterestDate) {
+function getMissingInterestMonths(firstDateOfAccrual) {
     var missingMonths = [];
-    var lastMonthend = getEndOfPriorMonth(new Date());
-    var lastDate = lastInterestDate;
-    while(isBefore(lastDate, lastMonthend)) {
-        lastDate = getEndOfNextMonth(lastDate);
-        missingMonths.push(lastDate);
+    var currentMonth = getStartOfMonth(new Date());
+    var lastDateOfMonth = getEndOfMonth(firstDateOfAccrual);
+    while(isBefore(lastDateOfMonth, currentMonth)) {
+        missingMonths.push(lastDateOfMonth);
+        lastDateOfMonth = getEndOfNextMonth(lastDateOfMonth);
     }
     return missingMonths;
 }
@@ -85,33 +85,34 @@ function getMissingInterestMonths(lastInterestDate) {
  * before existing transactions.
  */
 function generateInterestPayments() {
-    if(isEmpty(getLedger())) {
+    const ledger = getLedger();
+    if(isEmpty(ledger)) {
         return;
     }
     const lastInterest = getLastInterest();
-    var lastDate;
+    var firstDateOfAccrual;
     var lastBalance;
     if(lastInterest) {
-        lastDate = lastInterest.date;
-        lastBalance = getLastBalanceOfMonth(lastDate);
+        firstDateOfAccrual = getStartOfNextMonth(lastInterest.date);
+        lastBalance = getLastBalanceOfMonth(lastInterest.date);
     } else {
-        lastDate = getStartingDate();
-        lastBalance = getStartingBalance();
+        firstDateOfAccrual = getStartingDate(ledger);
+        lastBalance = getStartingBalance(ledger);
     }
-    const missingMonths = getMissingInterestMonths(lastDate);
+    const missingMonths = getMissingInterestMonths(firstDateOfAccrual);
     var lineItems = [];
     var interest = 0;
     var insertionRow = 0;
     for(var i=0; i<missingMonths.length; i++) {
         lineItems = getLinesForMonth(missingMonths[i].getFullYear(), missingMonths[i].getMonth()+1);
-        interest = calculateInterest(lastDate, lastBalance, missingMonths[i], lineItems);
+        interest = calculateInterest(firstDateOfAccrual, lastBalance, missingMonths[i], lineItems);
         insertionRow = getInsertionRow(missingMonths[i]);
-        if(insertionRow <= getLedger().getLastRow()) {
+        if(insertionRow <= ledger.getLastRow()) {
             shiftLinesDown(insertionRow);
         }
-        getLedger().getRange(insertionRow, 1, 1, 3).setValues([[missingMonths[i], 'Interest', interest]]);
+        ledger.getRange(insertionRow, 1, 1, 3).setValues([[missingMonths[i], 'Interest', interest]]);
         recalculateBalances(insertionRow - 1);
-        lastDate = missingMonths[i];
+        firstDateOfAccrual = missingMonths[i];
         lastBalance = getLedger().getRange(insertionRow, 4).getValue();
     }
 }

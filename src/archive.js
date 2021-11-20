@@ -12,40 +12,43 @@ function archiveHistory() {
     const history = getHistory();
     // Validate that first row in ledger is correct according to history
     const historicBalance = getHistoricBalance();
-
     const firstChange = ledger.getRange(Constants.LedgerRow.FIRST_DATA_ROW, Constants.Column.AMOUNT).getValue();
-    if (historicBalance + firstChange !== getStartingBalance(ledger)) {
-        // throw new Error(`Historic balance is incorrect: ${historicBalance} + ${firstChange} !== ${getStartingBalance()}`);
-        throw new Error('Historic balance is incorrect');
+    if (!isEmpty(history) && historicBalance + firstChange !== getStartingBalance(ledger)) {
+        throw new Error('Historic balance is incorrect: ' + historicBalance + ' + ' + firstChange + ' != ' + getStartingBalance(ledger));
     }
-
     // Find the last row to archive
-    const startOfCurrentMonth = getStartOfMonth(new Date());
-    const range = ledger.getDataRange().getValues();
-    var lastRow = null;
-    var fullArchive = false;
+    const currentDate = new Date();
+    const historyCutoffDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - Constants.MONTHS_TO_RETAIN, 1);
     const firstRow = getFirstDataRow(ledger);
-    for (var row = range.length - 1; row > firstRow && lastRow === null; row--) {
-        if (isBefore(convertDateToMidnight(range[row][0]), startOfCurrentMonth)) {
+    const lastRow = ledger.getLastRow();
+
+    const range = ledger.getRange(firstRow, 1, lastRow - firstRow + 1, 1).getValues();
+
+    var lastRowToArchive = null;
+    var fullArchive = false;
+    for (var row = range.length - 1; row >= 0 && lastRowToArchive === null; row--) {
+        if (isBefore(convertDateToMidnight(range[row][0]), historyCutoffDate)) {
             if (row === range.length - 1) {
                 fullArchive = true;
             }
-            lastRow = row+1;
+            lastRowToArchive = row + firstRow;
         }
     }
 
     // If there's no data earlier than this month, do nothing
-    if (lastRow === null) {
+    if (lastRowToArchive === null) {
         return;
     }
 
-    const numRows = lastRow - firstRow + 1;
-    const lastHistoricRow = history.getLastRow();
-    const currentBalance = getCurrentBalance();
     const firstLineIsStartingBalance = ledger.getRange(firstRow,2).getValue() === 'Starting Balance';
+    const firstRowToArchive = firstLineIsStartingBalance ? firstRow + 1 : firstRow;
+    const numRowsToArchive = lastRowToArchive - firstRowToArchive + 1;
 
-    var srcRange = ledger.getRange(firstLineIsStartingBalance ? firstRow+1 : firstRow, 1, numRows, Constants.NUM_DATA_COLUMNS);
-    var destRange = history.getRange(lastHistoricRow+1, 1, numRows, 5);
+    const historyInsertionRow = history.getLastRow() + 1;
+    const currentBalance = getCurrentBalance();
+
+    var srcRange = ledger.getRange(firstRowToArchive, 1, numRowsToArchive, Constants.NUM_DATA_COLUMNS);
+    var destRange = history.getRange(historyInsertionRow, 1, numRowsToArchive, Constants.NUM_DATA_COLUMNS);
     srcRange.copyTo(destRange);
     srcRange.clearContent();
     if (fullArchive) {
@@ -53,11 +56,7 @@ function archiveHistory() {
         ledger.getRange(firstRow, 1, 1, 4).setValues([[startOfCurrentMonth, 'Starting Balance', 0, currentBalance]]);
     } else {
         // Move all the remaining rows up
-        const oldLastRow = ledger.getLastRow();
-        const remainingRows = oldLastRow - lastRow;
-        const remainingLedgerRange = ledger.getRange(lastRow + 1, 1, remainingRows, Constants.NUM_DATA_COLUMNS);
-        remainingLedgerRange.copyTo(ledger.getRange(firstRow, 1, remainingRows, Constants.NUM_DATA_COLUMNS));
-        remainingLedgerRange.clearContent();
+        shiftRowsUp(ledger, lastRowToArchive + 1, ledger.getLastRow(), firstRow);
     }
 }
 

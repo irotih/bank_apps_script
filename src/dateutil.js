@@ -72,6 +72,10 @@ function getStartOfMonth(date) {
   return new Date(date.getFullYear(), date.getMonth(), 1);
 }
 
+function getStartOfNextMonth(date) {
+  return new Date(date.getFullYear(), date.getMonth() + 1, 1);
+}
+
 /**
  * @param {*} year 
  * @param {*} month 1-12

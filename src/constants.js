@@ -20,6 +20,7 @@ var Constants = {
         FIRST_DATA_ROW: 5
     },
 
+    MONTHS_TO_RETAIN: 12,
     NUM_DATA_COLUMNS: 5,
     NUM_REQ_DATA_COLUMNS: 4,
 
